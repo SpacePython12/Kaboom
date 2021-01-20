@@ -1,6 +1,7 @@
 import pygame
 import math
 import random
+import time
 
 class Player(pygame.sprite.Sprite):
 
@@ -16,8 +17,10 @@ class Player(pygame.sprite.Sprite):
         self.rect.centery = int(SHEIGHT/2)
         self.xspeed = 0
         self.yspeed = 0
+        self.health = 10
 
     def move(self, event):
+        global running
         if event[pygame.K_w]:
             self.yspeed += -0.1
         if event[pygame.K_s]:
@@ -42,6 +45,15 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.og_img, self.angle*57.2957795131)
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect(center=self.rect.center)
+        self.healthtext = "●"*self.health
+        self.healthbar = mainfont.render(self.healthtext, True, (255, 0, 0))
+        self.healthrect = self.healthbar.get_rect(center=(self.rect.centerx, self.rect.centery-20))
+        display.blit(self.healthbar, self.healthrect)
+        if self.health <= 0:
+            playergroup.remove(self)
+            explode.play()
+            time.sleep(1)
+            running = False
 
 class Bullet(pygame.sprite.Sprite):
 
@@ -61,7 +73,6 @@ class Bullet(pygame.sprite.Sprite):
         self.good = good
     
     def update(self):
-        global running
         self.rect.move_ip(-self.yc, -self.xc)
         if self.rect.top <= 0:
             self.kill
@@ -74,13 +85,15 @@ class Bullet(pygame.sprite.Sprite):
         for enemy in enemygroup:
             if self.good and self.rect.colliderect(enemy):
                 bulletgroup.remove(self)
-                enemygroup.remove(enemy)
-                print("enemy")
+                enemy.health += -1
+        for wall in wallgroup:
+            if self.rect.colliderect(wall):
+                bulletgroup.remove(self)
+                wallgroup.update()
+                wall.damage += 1
         if not self.good and self.rect.colliderect(player):
             bulletgroup.remove(self)
-            playergroup.remove(player)
-            running = False
-            print("player")
+            player.health += -1
 
 class Enemy(pygame.sprite.Sprite):
 
@@ -96,6 +109,7 @@ class Enemy(pygame.sprite.Sprite):
         self.xspeed = 0
         self.yspeed = 0
         self.timer = random.randint(0, 300)
+        self.health = 10
     
     def update(self):
         self.targetx, self.targety = player.rect.center
@@ -104,26 +118,63 @@ class Enemy(pygame.sprite.Sprite):
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect(center=self.rect.center)
         self.timer += 1
-        if self.timer == 300:
+        if self.timer == 600:
             self.timer = 0
             bulletgroup.add(Bullet(player.rect.center, self.rect.center, good=False))
+            shoot.play()
+        self.healthtext = "○"*self.health
+        self.healthbar = mainfont.render(self.healthtext, True, (255, 0, 0))
+        self.healthrect = self.healthbar.get_rect(center=(self.rect.centerx, self.rect.centery-20))
+        display.blit(self.healthbar, self.healthrect)
+        if self.health <= 0:
+            enemygroup.remove(self)
+            explode.play()
 
+class Wall(pygame.sprite.Sprite):
+
+    def __init__(self, pos):
+        super().__init__()
+        self.image = pygame.image.load("textures/wall0.png")
+        self.image.set_colorkey((255, 255, 255))
+        self.length = random.randint(1, 4)*64
+        self.rotation = random.randint(-1, 2)*90
+        self.rect = self.image.get_rect(center=pos)
+        self.damage = 0
+
+    def update(self):
+        if self.damage > 5:
+            wallgroup.remove(self)
+            explode.play()
+            return
+        self.image = pygame.image.load(f"textures/wall{self.damage}.png")
+        self.image.set_colorkey((255, 255, 255))
+        self.image = pygame.transform.scale(self.image, (self.length, 16))
+        self.image = pygame.transform.rotate(self.image, self.rotation)
+        self.rect = self.image.get_rect(center=self.rect.center)
 
 #initializing display
 SHEIGHT = 720
 SWIDTH = 1024
 pygame.init()
 display = pygame.display.set_mode((SWIDTH, SHEIGHT))
-version = f"Alpha 0.0.2"
+version = f"Alpha 1.3"
 pygame.display.set_caption(f"Kaboom {version}")
+mainfont = pygame.font.Font("font/arial.ttf", 24)
+#initializing sound
+pygame.mixer.init()
+shoot = pygame.mixer.Sound("sounds/shot.mp3")
+explode = pygame.mixer.Sound("sounds/explosion.mp3")
 #initializing sprites
 player = Player()
 playergroup = pygame.sprite.GroupSingle()
 bulletgroup = pygame.sprite.Group()
 enemygroup = pygame.sprite.Group()
+wallgroup = pygame.sprite.Group()
 playergroup.add(player)
 for enemy in range(random.randint(2, 5)):
     enemygroup.add(Enemy((random.randint(0, SWIDTH), random.randint(0, SHEIGHT))))
+for wall in range(random.randint(3, 10)):
+    wallgroup.add(Wall((random.randint(0, SWIDTH), random.randint(0, SHEIGHT))))
 running = True
 while running:
     for event in pygame.event.get():
@@ -131,12 +182,15 @@ while running:
             running = False
         if pygame.mouse.get_pressed()[pygame.BUTTON_LEFT-1] and event.type == pygame.MOUSEBUTTONDOWN:
             bulletgroup.add(Bullet(pygame.mouse.get_pos(), player.rect.center))
+            shoot.play()
     display.fill((0, 127, 255))
     playergroup.draw(display)
     bulletgroup.draw(display)
     enemygroup.draw(display)
+    wallgroup.draw(display)
     player.move(pygame.key.get_pressed())
     bulletgroup.update()
     enemygroup.update()
+    wallgroup.update()
     pygame.display.flip()
 pygame.quit()
