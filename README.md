@@ -5,7 +5,13 @@ When I'm finished with this I will fork this project in .exe and .app for Window
 
 **Requirements:**
 * Python 3.7 or higher
-* Pygame 2.0 (pip install pygame or python -m pip install --user pygame)
+* Pygame 2.0 
+```
+pip install pygame
+```
+```
+python -m pip install --user pygame
+```
 
 **Controls:**
 * WASD to move
