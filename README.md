@@ -1,5 +1,5 @@
 # Kaboom  
-A game like the classic Asteroids game, this is my first project on GitHub, and my first one using Git version control. Hope you like it!\
+A game like the classic Asteroids game, this is my first project on GitHub, and my first one using Git version control. Hope you like it!
 
 When I'm finished with this I will fork this project in .exe and .app for Windows and MacOS, respectively.
 
