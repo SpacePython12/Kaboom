@@ -21,7 +21,7 @@ class Player(pygame.sprite.Sprite):
         self.powerupcheck = [False, False, False]
 
     def move(self, event):
-        global running
+        global running, level
         if event[pygame.K_w]:
             self.yspeed += -0.2
         if event[pygame.K_s]:
@@ -40,10 +40,10 @@ class Player(pygame.sprite.Sprite):
             self.rect.left = 1
         for wall in pygame.sprite.spritecollide(self, wallgroup, False):
             if self.rect.right in range(wall.rect.left, wall.rect.centerx) or self.rect.left in range(wall.rect.centerx, wall.rect.right):
-                self.rect.centerx += -(self.xspeed*1.2)
+                self.rect.centerx += -(self.xspeed*0.8)
                 self.xspeed = 0
             if self.rect.top in range(wall.rect.centery, wall.rect.bottom) or self.rect.bottom in range(wall.rect.top, wall.rect.centery):
-                self.rect.centery += -(self.yspeed*1.2)
+                self.rect.centery += -(self.yspeed*0.8)
                 self.yspeed = 0
         if self.powerups[1]:
             if self.powerupcheck[1]:
@@ -123,6 +123,7 @@ class Bullet(pygame.sprite.Sprite):
             if self.good and self.rect.colliderect(enemy):
                 bulletgroup.remove(self)
                 enemy.health += -1
+                enemy.timer = 0
         for wall in wallgroup:
             if self.rect.colliderect(wall):
                 bulletgroup.remove(self)
@@ -215,6 +216,7 @@ class Powerup(pygame.sprite.Sprite):
 
 def init_level():
     global level
+    level += 1
     bulletgroup.empty()
     enemygroup.empty()
     wallgroup.empty()
@@ -223,21 +225,21 @@ def init_level():
     player.rect.centery = int(SHEIGHT/2)
     player.health = 10
     player.powerups = [False, False, False]
-    with open("level.json") as lev:
-        l = json.loads(lev.read())
-        sel = l[level]
-        for wall in sel["walls"]:
-            wallgroup.add(Wall((wall[0], wall[1]), wall[2], wall[3]))
-        for enemy in sel["enemies"]:
-            enemygroup.add(Enemy((enemy[0], enemy[1]), enemy[2]))
-        level = l.index(next(iter(l)))
+    for wall in range(random.randint(level+2, level+4)):
+        w = Wall((random.randint(0, SWIDTH), random.randint(0, SHEIGHT)), random.randint(1, 4), random.randint(0, 1))
+        wallgroup.add(w)
+    for enemy in range(random.randint(level, level+1)):
+        e = Enemy((random.randint(0, SWIDTH), random.randint(0, SHEIGHT)), random.randint(6, math.floor((level)/4)+6))
+        enemygroup.add(e)
+        while pygame.sprite.spritecollide(e, wallgroup, False):
+            e.rect.center = (random.randint(0, SWIDTH), random.randint(0, SHEIGHT))
 
 #initializing display
 SHEIGHT = 720
 SWIDTH = 1024
 pygame.init()
 display = pygame.display.set_mode((SWIDTH, SHEIGHT))
-version = 0.5
+version = 0.6
 pygame.display.set_caption(f"Kaboom {version}")
 mainfont = pygame.font.Font("font/arial.ttf", 24)
 titlefont = pygame.font.Font("font/arial.ttf", 108) 
@@ -260,6 +262,8 @@ level = 0
 init_level()
 running = True
 while running:
+    pygame.time.Clock().tick_busy_loop()
+    print(int(pygame.time.Clock().get_fps()))
     if len(enemygroup) == 0:
         titlebar = mainfont.render(f"Level cleared! Level {level+1} next", True, (0, 255, 0))
         titlerect = titlebar.get_rect(center=(int(SWIDTH/2), int(SHEIGHT/2)))
@@ -281,6 +285,8 @@ while running:
                 if player.powerups[2]:
                     bulletgroup.add(Bullet(pygame.mouse.get_pos(), player.rect.center, offset=True))
                     shoot.play()
+        elif event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
+            print(pygame.mouse.get_pos())
     display.fill((0, 127, 255))
     playergroup.draw(display)
     bulletgroup.draw(display)
