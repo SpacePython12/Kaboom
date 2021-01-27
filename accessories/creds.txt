@@ -1,0 +1,18 @@
+This project could not have been done without the help of the following:
+
+Stack Overflow (obviously),
+    for all of the countless tutorials that helps every programmer with any project, 
+    and for its diverse community.
+
+Pygame, 
+    for providing the framework on which this game was made.
+
+And thanks all the other helpful websites out there.
+
+But most importantly,
+Last but definitely not least,
+Python Software Corporation,
+    for developing the powerful programming language known as Python,
+    and for creating libraries that grant an incredible amount amount of power on the computer.
+
+Without these things, this would not have been possible.

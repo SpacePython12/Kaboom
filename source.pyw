@@ -2,7 +2,6 @@ import pygame
 import math
 import random
 import time
-import json
 
 class Player(pygame.sprite.Sprite):
     """The player class"""
@@ -255,7 +254,7 @@ class Powerup(pygame.sprite.Sprite):
 
 
 def init_level():
-    global level
+    global level, bulletgroup, enemygroup, wallgroup, powergroup, SHEIGHT, SWIDTH, player, mainfont, display, player
     level += 1
     bulletgroup.empty()
     enemygroup.empty()
@@ -274,68 +273,74 @@ def init_level():
         while pygame.sprite.spritecollide(e, wallgroup, False):
             e.rect.center = (random.randint(0, SWIDTH), random.randint(0, SHEIGHT))
 
-#initializing display
-SHEIGHT = 720
-SWIDTH = 1024
-pygame.init()
-display = pygame.display.set_mode((SWIDTH, SHEIGHT))
-version = 0.6
-pygame.display.set_caption(f"Kaboom {version}")
-mainfont = pygame.font.Font("font/arial.ttf", 24)
-titlefont = pygame.font.Font("font/arial.ttf", 108) 
-#initializing sound
-#sounds from Zapsplat.com
-pygame.mixer.init()
-shoot = pygame.mixer.Sound("sounds/shot.mp3")
-death = pygame.mixer.Sound("sounds/death.mp3")
-playerdeath = pygame.mixer.Sound("sounds/playerdeath.mp3")
-wallbreak = pygame.mixer.Sound("sounds/break.mp3")
-#initializing sprites
-player = Player()
-playergroup = pygame.sprite.GroupSingle()
-bulletgroup = pygame.sprite.Group()
-enemygroup = pygame.sprite.Group()
-wallgroup = pygame.sprite.Group()
-powergroup = pygame.sprite.Group()
-playergroup.add(player)
-level = 0
-init_level()
-running = True
-while running:
-    pygame.time.Clock().tick()
-    if len(wallgroup) == 0:
-        titlebar = mainfont.render(f"Level cleared! Level {level+1} next", True, (0, 255, 0))
-        titlerect = titlebar.get_rect(center=(int(SWIDTH/2), int(SHEIGHT/2)))
-        display.blit(titlebar, titlerect)
-        bulletgroup.empty()
-        enemygroup.empty()
-        wallgroup.empty()
-        powergroup.empty()
-        pygame.display.flip()
-        init_level()
-        time.sleep(2)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                bulletgroup.add(Bullet(pygame.mouse.get_pos(), player.rect.center))
-                shoot.play()
-                if player.powerups[2]:
-                    bulletgroup.add(Bullet(pygame.mouse.get_pos(), player.rect.center, offset=True))
+def init():
+    global SHEIGHT, SWIDTH, display, mainfont, titlefont, shoot, death, playerdeath, wallbreak, player, bulletgroup, enemygroup, wallgroup, powergroup, level, running 
+    pygame.init()
+    #initializing display
+    SHEIGHT = 720
+    SWIDTH = 1024
+    display = pygame.display.set_mode((SWIDTH, SHEIGHT))
+    version = 1.0
+    pygame.display.set_caption(f"Kaboom {version}")
+    mainfont = pygame.font.Font("font/arial.ttf", 24)
+    titlefont = pygame.font.Font("font/arial.ttf", 108) 
+    #initializing sound
+    #sounds from Zapsplat.com
+    pygame.mixer.init()
+    shoot = pygame.mixer.Sound("sounds/shot.mp3")
+    death = pygame.mixer.Sound("sounds/death.mp3")
+    playerdeath = pygame.mixer.Sound("sounds/playerdeath.mp3")
+    wallbreak = pygame.mixer.Sound("sounds/break.mp3")
+    #initializing sprites
+    player = Player()
+    playergroup = pygame.sprite.GroupSingle()
+    bulletgroup = pygame.sprite.Group()
+    enemygroup = pygame.sprite.Group()
+    wallgroup = pygame.sprite.Group()
+    powergroup = pygame.sprite.Group()
+    playergroup.add(player)
+    level = 0
+    init_level()
+    running = True
+    while running:
+        pygame.time.Clock().tick()
+        if len(enemygroup) == 0:
+            titlebar = mainfont.render(f"Level cleared! Level {level+1} next", True, (0, 255, 0))
+            titlerect = titlebar.get_rect(center=(int(SWIDTH/2), int(SHEIGHT/2)))
+            display.blit(titlebar, titlerect)
+            bulletgroup.empty()
+            enemygroup.empty()
+            wallgroup.empty()
+            powergroup.empty()
+            pygame.display.flip()
+            init_level()
+            time.sleep(2)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    bulletgroup.add(Bullet(pygame.mouse.get_pos(), player.rect.center))
                     shoot.play()
-        elif event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
-            print(pygame.mouse.get_pos())
-    display.fill((0, 127, 255))
-    playergroup.draw(display)
-    bulletgroup.draw(display)
-    enemygroup.draw(display)
-    wallgroup.draw(display)
-    powergroup.draw(display)
-    player.move(pygame.key.get_pressed())
-    bulletgroup.update()
-    enemygroup.update()
-    wallgroup.update()
-    powergroup.update()
-    pygame.display.flip()
-pygame.quit()
+                    if player.powerups[2]:
+                        bulletgroup.add(Bullet(pygame.mouse.get_pos(), player.rect.center, offset=True))
+                        shoot.play()
+            elif event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
+                pass
+        display.fill((0, 127, 255))
+        playergroup.draw(display)
+        bulletgroup.draw(display)
+        enemygroup.draw(display)
+        wallgroup.draw(display)
+        powergroup.draw(display)
+        player.move(pygame.key.get_pressed())
+        bulletgroup.update()
+        enemygroup.update()
+        wallgroup.update()
+        powergroup.update()
+        pygame.display.flip()
+
+def end():
+    pygame.quit()
+if __name__ == "__main__":
+    init()
