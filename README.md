@@ -12,7 +12,6 @@ pip install pygame
 ```
 python -m pip install --user pygame
 ```
-
 **Controls:**
 * WASD to move
 * Mouse to aim
